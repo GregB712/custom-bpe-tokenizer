@@ -1,6 +1,6 @@
 # custom-bpe-tokenizer
 
-[![CI](https://github.com/<your-user>/custom-bpe-tokenizer/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-user>/custom-bpe-tokenizer/actions/workflows/ci.yml)
+[![CI](https://github.com/GregB712/custom-bpe-tokenizer/actions/workflows/ci.yml/badge.svg)](https://github.com/GregB712/custom-bpe-tokenizer/actions/workflows/ci.yml)
 
 An advanced tokenizer engineering portfolio project implemented from scratch in Python. The repository demonstrates NLP algorithm implementation, typed package design, JSON model artifacts, benchmarking, FastAPI serving, Streamlit visualization, tests, examples, and CI/CD.
 
@@ -38,7 +38,7 @@ src/tokenizer/
 ## Installation
 
 ```bash
-git clone <your-repo-url>
+git clone git@github.com:GregB712/custom-bpe-tokenizer.git
 cd custom-bpe-tokenizer
 python -m venv .venv
 source .venv/bin/activate
