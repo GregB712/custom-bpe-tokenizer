@@ -13,7 +13,7 @@ from tokenizer import BPETokenizer  # noqa: E402
 
 def main() -> None:
     corpus_path = PROJECT_ROOT / "data" / "sample_corpus.txt"
-    output_path = PROJECT_ROOT / "artifacts" / "tokenizer.json"
+    output_path = PROJECT_ROOT / "artifacts" / "bpe_tokenizer.json"
 
     tokenizer = BPETokenizer(vocab_size=180, min_frequency=2, lowercase=True)
     tokenizer.fit(str(corpus_path))

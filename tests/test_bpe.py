@@ -92,3 +92,13 @@ def test_encode_before_fit_raises_error():
     tokenizer = BPETokenizer()
     with pytest.raises(RuntimeError):
         tokenizer.encode("not fitted")
+
+
+def test_trace_encode_returns_initial_and_final_states():
+    tokenizer = BPETokenizer(vocab_size=80, min_frequency=1)
+    tokenizer.fit(FIXED_CORPUS)
+    trace = tokenizer.trace_encode("Tokenization")
+    assert isinstance(trace, list)
+    stages = [step["stage"] for step in trace[0]["steps"]]
+    assert stages[0] == "initial"
+    assert stages[-1] == "final"

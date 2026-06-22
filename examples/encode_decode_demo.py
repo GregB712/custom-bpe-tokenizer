@@ -12,7 +12,7 @@ from tokenizer import BPETokenizer  # noqa: E402
 
 
 def main() -> None:
-    model_path = PROJECT_ROOT / "artifacts" / "tokenizer.json"
+    model_path = PROJECT_ROOT / "artifacts" / "bpe_tokenizer.json"
     if not model_path.exists():
         print("No saved tokenizer found. Run examples/train_tokenizer.py first.")
         return

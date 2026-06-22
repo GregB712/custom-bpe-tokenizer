@@ -24,7 +24,7 @@ def main() -> None:
         print("Install transformers to run this optional comparison.")
         return
 
-    model_path = PROJECT_ROOT / "artifacts" / "tokenizer.json"
+    model_path = PROJECT_ROOT / "artifacts" / "bpe_tokenizer.json"
     if not model_path.exists():
         tokenizer = BPETokenizer(vocab_size=180, min_frequency=2)
         tokenizer.fit(str(PROJECT_ROOT / "data" / "sample_corpus.txt"))

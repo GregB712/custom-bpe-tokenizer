@@ -1,33 +1,39 @@
 # custom-bpe-tokenizer
 
-A production-quality Byte Pair Encoding tokenizer implemented from scratch in Python. This project is designed as a GitHub portfolio piece for NLP, algorithmic engineering, and maintainable Python package design.
+[![CI](https://github.com/<your-user>/custom-bpe-tokenizer/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-user>/custom-bpe-tokenizer/actions/workflows/ci.yml)
 
-## Why Tokenization Matters
+An advanced tokenizer engineering portfolio project implemented from scratch in Python. The repository demonstrates NLP algorithm implementation, typed package design, JSON model artifacts, benchmarking, FastAPI serving, Streamlit visualization, tests, examples, and CI/CD.
 
-Tokenization is the bridge between raw text and numerical machine-learning models. A tokenizer defines how text is segmented, how tokens map to integer IDs, how unknown text is handled, and how reliably model inputs can be reproduced. Strong tokenization choices improve vocabulary coverage, reduce sequence length, and make NLP systems easier to debug.
+## Why Tokenizers Matter
 
-## What Is Byte Pair Encoding?
+Tokenizers define how raw text becomes model input IDs. For LLMs and NLP systems, tokenization affects sequence length, vocabulary coverage, Unicode handling, latency, cost, and debugging quality. This project implements several foundational tokenization families so their tradeoffs can be inspected directly.
 
-Byte Pair Encoding (BPE) is a subword tokenization algorithm. It starts with small units, such as characters, then repeatedly merges the most frequent adjacent pair. Over many iterations, common fragments become compact tokens while rare words can still be represented as smaller subword pieces.
+## Implemented Tokenizers
 
-This implementation uses a word-aware character-level BPE variant with an explicit end-of-word marker. That keeps the algorithm readable while allowing decoded output to reconstruct whitespace and punctuation cleanly.
+- **BPE**: word-aware character/subword Byte Pair Encoding with deterministic merge rules.
+- **Byte-level BPE**: GPT-style UTF-8 byte initialization with JSON-safe byte tokens such as `<0xE2>`.
+- **WordPiece**: simplified BERT-style tokenizer with `##` continuation pieces and greedy longest-match-first encoding.
+- **Unigram LM**: simplified SentencePiece-style tokenizer with substring probabilities and Viterbi segmentation.
 
-## Features
+The WordPiece and Unigram trainers are educational implementations, not drop-in replacements for the original Google/SentencePiece training objectives.
 
-- From-scratch BPE training loop with deterministic merge selection
-- Configurable vocabulary size
-- Configurable minimum merge frequency
-- Encoding text into token IDs
-- Decoding token IDs back into readable text
-- Batch encoding
-- Save and load JSON-readable tokenizer files
-- Default special tokens: `<PAD>`, `<UNK>`, `<BOS>`, `<EOS>`
-- Optional lowercasing
-- Optional basic punctuation splitting
-- Graceful unknown-token fallback
-- Pytest test suite
-- CLI built with `argparse`
-- Practical examples and analysis notebook
+## Architecture
+
+```text
+src/tokenizer/
+├── base.py          # Abstract tokenizer interface
+├── bpe.py           # Character/subword BPE
+├── byte_bpe.py      # UTF-8 byte-level BPE
+├── wordpiece.py     # WordPiece-style tokenizer
+├── unigram.py       # Unigram LM tokenizer
+├── benchmark.py     # Custom + optional Hugging Face benchmarks
+├── api.py           # FastAPI app
+├── cli.py           # Multi-tokenizer CLI
+├── serialization.py # Artifact inspection/loading helpers
+├── preprocessing.py # Normalization and pre-tokenization
+├── vocabulary.py    # Bidirectional token-ID mapping
+└── utils.py         # JSON and corpus helpers
+```
 
 ## Installation
 
@@ -36,43 +42,49 @@ git clone <your-repo-url>
 cd custom-bpe-tokenizer
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -e .
 ```
 
-For the optional Hugging Face comparison:
+For Hugging Face comparisons only:
 
 ```bash
-pip install -e ".[hf]"
+pip install "transformers>=4.40"
 ```
 
-## Usage
+Tests do not require internet access, Hugging Face downloads, or torch.
+
+## Quickstart
 
 ```python
-from tokenizer import BPETokenizer
+from tokenizer import BPETokenizer, ByteLevelBPETokenizer, WordPieceTokenizer, UnigramTokenizer
 
 corpus = [
     "Tokenization converts text into model-ready token IDs.",
-    "Byte Pair Encoding learns frequent subword patterns.",
+    "Byte pair encoding learns frequent subword patterns.",
+    "Unicode examples: Ελληνικά, café, 🚀.",
 ]
 
-tokenizer = BPETokenizer(vocab_size=100, min_frequency=1)
+tokenizer = ByteLevelBPETokenizer(vocab_size=340, min_frequency=1)
 tokenizer.fit(corpus)
 
-ids = tokenizer.encode("Tokenization is important for NLP.")
-text = tokenizer.decode(ids)
+ids = tokenizer.encode("Tokenization handles Ελληνικά and 🚀.")
+decoded = tokenizer.decode(ids)
 
 print(ids)
-print(text)
+print(decoded)
 ```
 
-## CLI Examples
+## CLI Usage
 
-Train a tokenizer:
+Train any tokenizer:
 
 ```bash
 python -m tokenizer.cli train \
+  --tokenizer-type bpe \
   --input data/sample_corpus.txt \
-  --output artifacts/tokenizer.json \
+  --output artifacts/bpe_tokenizer.json \
   --vocab-size 1000
 ```
 
@@ -80,135 +92,160 @@ Encode text:
 
 ```bash
 python -m tokenizer.cli encode \
-  --model artifacts/tokenizer.json \
-  --text "Tokenization is important for NLP."
+  --tokenizer-type byte_bpe \
+  --model artifacts/byte_bpe_tokenizer.json \
+  --text "Tokenization is important."
 ```
 
 Decode IDs:
 
 ```bash
 python -m tokenizer.cli decode \
-  --model artifacts/tokenizer.json \
-  --ids "2 45 98 3"
+  --tokenizer-type bpe \
+  --model artifacts/bpe_tokenizer.json \
+  --ids "2 45 982 3"
 ```
 
-If you are running from a source checkout without installing the package, use:
+Benchmark:
 
 ```bash
-PYTHONPATH=src python -m tokenizer.cli train --input data/sample_corpus.txt --output artifacts/tokenizer.json
+python -m tokenizer.cli benchmark \
+  --input data/sample_corpus.txt \
+  --include-hf
 ```
 
-## Training Example
+Supported `--tokenizer-type` values: `bpe`, `byte_bpe`, `wordpiece`, `unigram`.
+
+## Examples
 
 ```bash
 python examples/train_tokenizer.py
+python examples/train_byte_bpe.py
+python examples/train_wordpiece.py
+python examples/train_unigram.py
+python examples/encode_decode_demo.py
+python examples/benchmark_tokenizers.py
 ```
 
-Example output:
+Artifacts are saved under `artifacts/` and ignored by git except for `.gitkeep`.
 
-```text
-Tokenizer saved to: artifacts/tokenizer.json
-Vocabulary size: 180
-Sample merge rules:
-01. 'e' + '</w>' -> 'e</w>'
-02. 't' + 'i' -> 'ti'
-03. 'i' + 'n' -> 'in'
-```
+## FastAPI
 
-## Encoding and Decoding Demo
+Run the API:
 
 ```bash
-python examples/encode_decode_demo.py
+uvicorn tokenizer.api:app --reload
 ```
 
-Example output:
+Health:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Tokenize:
+
+```bash
+curl -X POST http://127.0.0.1:8000/tokenize \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Tokenization is useful.","tokenizer_type":"bpe","add_special_tokens":true}'
+```
+
+If an artifact is missing, the API trains a small default tokenizer from `data/sample_corpus.txt` and caches it in memory.
+
+## Streamlit Merge Visualization
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+The app visualizes learned BPE and byte-level BPE merge rules, step-by-step encoding traces, encoded IDs, decoded text, and a compact token frequency chart.
+
+## Benchmarking
+
+`tokenizer.benchmark.benchmark_tokenizers` reports:
+
+- average tokens per text
+- total tokens
+- texts/sec
+- tokens/sec
+- average encode latency in milliseconds
+- approximate vocabulary size
+
+Example table:
 
 ```text
-Text:    Tokenization is important for NLP.
-IDs:     [2, 58, 31, 74, 3]
-Decoded: tokenization is important for nlp.
+name      | avg_tok/text | total_tokens | texts/sec | tokens/sec | latency_ms | vocab
+----------+--------------+--------------+-----------+------------+------------+------
+bpe       | 18.40        | 184          | 8200.5    | 150889.2   | 0.122      | 180
+byte_bpe  | 31.70        | 317          | 5900.1    | 187033.1   | 0.169      | 340
+wordpiece | 15.20        | 152          | 9100.4    | 138326.0   | 0.110      | 180
+unigram   | 16.80        | 168          | 7600.8    | 127693.4   | 0.132      | 180
 ```
 
-Token IDs will vary when you change vocabulary size, minimum frequency, corpus, or preprocessing settings.
+Hugging Face tokenizers are optional. If `transformers` is missing or model download fails, the benchmark continues with custom tokenizers and emits a warning.
 
-## Project Structure
+## Algorithm Notes
 
-```text
-custom-bpe-tokenizer/
-├── README.md
-├── pyproject.toml
-├── requirements.txt
-├── .gitignore
-├── src/
-│   └── tokenizer/
-│       ├── __init__.py
-│       ├── bpe.py
-│       ├── cli.py
-│       ├── preprocessing.py
-│       ├── vocabulary.py
-│       └── utils.py
-├── examples/
-│   ├── train_tokenizer.py
-│   ├── encode_decode_demo.py
-│   └── compare_with_huggingface.py
-├── tests/
-│   ├── test_bpe.py
-│   ├── test_vocabulary.py
-│   └── test_preprocessing.py
-├── data/
-│   └── sample_corpus.txt
-└── notebooks/
-    └── tokenizer_analysis.ipynb
-```
+**BPE** starts with character tokens plus an end-of-word marker, repeatedly merges the most frequent adjacent pair above `min_frequency`, and applies learned merges in rank order during encoding.
+
+**Byte-level BPE** starts from all 256 UTF-8 byte values, learns merges over byte-token sequences, and decodes merged byte tokens back through UTF-8 with `errors="replace"`. This makes arbitrary Unicode text representable without a character vocabulary.
+
+**WordPiece** builds a vocabulary from frequent full words, characters, and substrings. Encoding uses greedy longest-match-first segmentation with a `##` continuation prefix.
+
+**Unigram LM** builds substring candidates, estimates negative log probabilities from frequencies, and uses Viterbi dynamic programming to choose a minimum-cost segmentation.
 
 ## Testing
-
-Run the full test suite:
 
 ```bash
 pytest
 ```
 
-The tests cover training, encoding, decoding, persistence, special tokens, unknown tokens, batch encoding, and deterministic behavior on a fixed corpus.
+Coverage includes existing BPE behavior, byte-level Unicode handling, WordPiece continuation pieces, Unigram Viterbi segmentation, JSON serialization, benchmark schema/formatting, FastAPI endpoints, BPE trace output, vocabulary utilities, preprocessing, and CLI factory behavior.
 
-## Implementation Notes
+## Project Structure
 
-The core BPE algorithm lives in `src/tokenizer/bpe.py`:
-
-1. Normalize and tokenize text.
-2. Convert each token to character symbols plus an end-of-word marker.
-3. Count adjacent symbol-pair frequencies.
-4. Merge the most frequent pair above `min_frequency`.
-5. Store the merge rule and add the merged token to the vocabulary.
-6. Repeat until the vocabulary limit is reached or no eligible pairs remain.
-
-The saved tokenizer JSON contains configuration, vocabulary, and merge rules, making artifacts inspectable and version-control friendly.
+```text
+custom-bpe-tokenizer/
+├── .github/workflows/ci.yml
+├── app/streamlit_app.py
+├── artifacts/.gitkeep
+├── data/sample_corpus.txt
+├── examples/
+├── notebooks/tokenizer_analysis.ipynb
+├── src/tokenizer/
+├── tests/
+├── README.md
+├── pyproject.toml
+├── requirements.txt
+└── requirements-dev.txt
+```
 
 ## Limitations
 
-- This is an educational from-scratch implementation, not a drop-in replacement for highly optimized production tokenizers.
-- It uses character-level initialization rather than true byte-level UTF-8 initialization.
-- It does not implement dropout, normalization pipelines, offsets, truncation, or padding utilities.
-- Training recomputes pair frequencies after each merge for clarity, which is slower than optimized heap-based implementations.
+- Implementations prioritize readability and educational value over production throughput.
+- WordPiece training is a simplified frequency-based approximation.
+- Unigram training does not perform iterative EM pruning.
+- No offset mapping, truncation, padding strategies, or streaming large-corpus trainer are included.
+- Benchmark results on tiny corpora are illustrative, not statistically rigorous.
 
-## Possible Future Improvements
+## Future Work
 
-- Byte-level initialization for full Unicode byte coverage
-- Offset mapping for aligning tokens back to source text
-- Padding and truncation helpers for model batching
-- Streaming corpus training for large datasets
-- Faster pair-stat updates during training
-- Vocabulary export formats compatible with downstream ML tooling
-- Richer normalization options
+- Offset maps for token-to-text alignment
+- Padding/truncation utilities for model batches
+- Streaming trainers for large corpora
+- Faster BPE pair-stat updates
+- More normalization options
+- Export adapters for downstream ML frameworks
+- Richer benchmark datasets and profiler integration
 
 ## Skills Demonstrated
 
-- NLP fundamentals and subword tokenization
-- Algorithm implementation from first principles
-- Deterministic training behavior
-- Python package architecture with `src/` layout
-- Type hints and public API docstrings
-- JSON model persistence
-- CLI design with `argparse`
-- Unit testing with `pytest`
-- Practical examples and notebook-based analysis
+- NLP tokenizer algorithm implementation
+- Typed Python package architecture
+- JSON model serialization
+- API development with FastAPI
+- Visualization with Streamlit
+- Benchmarking and graceful optional integrations
+- Test design with pytest
+- CI/CD with GitHub Actions

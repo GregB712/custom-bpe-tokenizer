@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Counter as CounterType
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
+from .base import BaseTokenizer
 from .preprocessing import basic_tokenize, detokenize
 from .utils import read_corpus, read_json, write_json
 from .vocabulary import DEFAULT_SPECIAL_TOKENS, Vocabulary
@@ -16,7 +17,7 @@ Pair = Tuple[str, str]
 Word = Tuple[str, ...]
 
 
-class BPETokenizer:
+class BPETokenizer(BaseTokenizer):
     """A compact, educational Byte Pair Encoding tokenizer.
 
     The implementation starts from character-level word tokens and learns merge
@@ -174,6 +175,7 @@ class BPETokenizer:
 
         self._require_fitted()
         data = {
+            "tokenizer_type": "bpe",
             "config": {
                 "vocab_size": self.vocab_size,
                 "min_frequency": self.min_frequency,
@@ -220,6 +222,48 @@ class BPETokenizer:
         """Return the token string for an ID, using ``<UNK>`` for missing IDs."""
 
         return self.vocab.id_to_token(token_id)
+
+    def trace_encode(self, text: str) -> List[Dict[str, object]]:
+        """Return merge steps used while encoding text for visualization."""
+
+        self._require_fitted()
+        traces: List[Dict[str, object]] = []
+        for raw_token in basic_tokenize(
+            text,
+            lowercase=self.lowercase,
+            split_punctuation=self.split_punctuation,
+        ):
+            symbols = self._word_to_symbols(raw_token)
+            steps: List[Dict[str, object]] = [
+                {"stage": "initial", "tokens": list(symbols), "merge": None}
+            ]
+            while len(symbols) > 1:
+                ranked_pairs = [
+                    (self.merge_ranks[pair], pair)
+                    for pair in zip(symbols, symbols[1:])
+                    if pair in self.merge_ranks
+                ]
+                if not ranked_pairs:
+                    break
+                _, best_pair = min(ranked_pairs, key=lambda item: item[0])
+                symbols = self._merge_word(symbols, best_pair)
+                steps.append(
+                    {"stage": "merge", "merge": list(best_pair), "tokens": list(symbols)}
+                )
+            steps.append({"stage": "final", "tokens": list(symbols), "merge": None})
+            traces.append({"text": raw_token, "steps": steps, "final_tokens": list(symbols)})
+        if not traces:
+            return [
+                {
+                    "text": "",
+                    "steps": [
+                        {"stage": "initial", "tokens": [], "merge": None},
+                        {"stage": "final", "tokens": [], "merge": None},
+                    ],
+                    "final_tokens": [],
+                }
+            ]
+        return traces
 
     def _iter_initial_words(self, texts: Iterable[str]) -> Iterable[Word]:
         for text in texts:

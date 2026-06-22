@@ -13,3 +13,6 @@ Frequent words become compact tokens, while rare words can still be composed fro
 This sample corpus includes repeated language about tokenization, encoding, decoding, and vocabulary learning.
 Careful software design makes an educational algorithm easier to maintain and extend.
 Python implementations benefit from clear type hints, simple data structures, and deterministic tests.
+Byte-level tokenization can represent Unicode text such as Ελληνικά, café, naïve, and 🚀.
+Tokenizer APIs make encode and decode workflows available to applications and services.
+Visualization tools help engineers inspect merge rules and understand subword behavior.
