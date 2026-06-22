@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "custom-bpe-tokenizer"
+version = "0.1.0"
+description = "A from-scratch Byte Pair Encoding tokenizer for NLP portfolio projects."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Portfolio Project" }
+]
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "matplotlib>=3.8", "tqdm>=4.66"]
+hf = ["transformers>=4.40"]
+
+[project.scripts]
+custom-bpe-tokenizer = "tokenizer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

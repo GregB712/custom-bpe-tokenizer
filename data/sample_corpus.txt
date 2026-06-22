@@ -1,0 +1,15 @@
+Tokenization is the process of converting raw text into a sequence of tokens.
+Modern natural language processing systems rely on tokenization before training models.
+Byte Pair Encoding starts with small units and repeatedly merges frequent adjacent pairs.
+BPE is widely used because it balances vocabulary size with the ability to represent rare words.
+Subword tokenization helps language models handle morphology, misspellings, and unseen terminology.
+A tokenizer maps text to token IDs, and a decoder maps token IDs back to readable text.
+Special tokens such as BOS and EOS mark the beginning and end of a sequence.
+The PAD token supports batching by allowing sequences of different lengths to fit into tensors.
+The UNK token provides a graceful fallback when a symbol cannot be represented.
+Good NLP systems make preprocessing choices explicit, testable, and reproducible.
+Machine learning engineers often inspect vocabularies to understand data coverage.
+Frequent words become compact tokens, while rare words can still be composed from smaller pieces.
+This sample corpus includes repeated language about tokenization, encoding, decoding, and vocabulary learning.
+Careful software design makes an educational algorithm easier to maintain and extend.
+Python implementations benefit from clear type hints, simple data structures, and deterministic tests.
